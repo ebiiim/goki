@@ -3,6 +3,7 @@ package db
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -17,6 +18,7 @@ import (
 type UserDB interface {
 	io.Closer
 	Get(userID string) (*model.User, error)
+	GetByTwitterID(twitterID string) (*model.User, error)
 	Add(user *model.User) error
 }
 
@@ -97,10 +99,25 @@ func (d *JSONUserDB) Get(userID string) (*model.User, error) {
 	return u, nil
 }
 
+// GetByTwitterID gets an user by Twitter ID or error.
+func (d *JSONUserDB) GetByTwitterID(twitterID string) (*model.User, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	for _, u := range d.db {
+		if u.Twitter.ID == twitterID {
+			return u, nil
+		}
+	}
+	return nil, goki.ErrInvalidUser(fmt.Errorf("Twitter %v", twitterID))
+}
+
 // Add adds an user.
 func (d *JSONUserDB) Add(user *model.User) error {
 	if _, err := d.Get(user.ID); err == nil {
 		return goki.ErrUserAlreadyExist(errors.New(user.ID))
+	}
+	if _, err := d.GetByTwitterID(user.Twitter.ID); err == nil {
+		return goki.ErrUserAlreadyExist(fmt.Errorf("Twitter %v", user.Twitter.ID))
 	}
 	u := model.NewUser(user.ID, user.Name, user.Twitter.ID)
 	d.mu.Lock()

@@ -108,6 +108,50 @@ func TestJSONUserDB_Get(t *testing.T) {
 	}
 }
 
+func TestJSONUserDB_GetByTwitterID(t *testing.T) {
+	var testDBPath = filepath.Join(testdataDir, "JSONUserDB_Get.json")
+	d, err := db.NewJSONUserDB(testDBPath)
+	if err != nil {
+		t.Error(t)
+		return
+	}
+	if err := d.Close(); err != nil {
+		t.Error(err)
+	}
+	cases := []struct {
+		name      string
+		d         *db.JSONUserDB
+		twitterID string
+		userID    string
+		isErr     bool
+	}{
+		{"alice", d, U1.Twitter.ID, U1.ID, false},
+		{"bob", d, U2.Twitter.ID, U2.ID, false},
+		{"F_taro", d, "00000000", "000", true},
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			u, err := c.d.GetByTwitterID(c.twitterID)
+			if c.isErr {
+				if err == nil {
+					t.Error("expected err")
+					return
+				}
+				return
+			}
+			if err != nil {
+				t.Error("err")
+				return
+			}
+			if u.ID != c.userID {
+				t.Error("data")
+				return
+			}
+		})
+	}
+}
+
 func TestJSONUserDB_Add(t *testing.T) {
 	var testDBPath = "JSONUserDB_Add.json"
 	defer removeFile(t, testDBPath)
@@ -130,6 +174,7 @@ func TestJSONUserDB_Add(t *testing.T) {
 		{"alice", d, U1, false},
 		{"bob", d, U2, false},
 		{"F_alice2", d, U1, true},
+		{"F_taro_Twitter_duplicated", d, model.NewUser("000", "taro", "12345678"), true},
 	}
 	for _, c := range cases {
 		c := c
