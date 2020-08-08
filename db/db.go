@@ -24,7 +24,7 @@ type UserDB interface {
 type ActivityDB interface {
 	io.Closer
 	Add(activity *model.Activity) error
-	Query(userID string, beginUTC, endUTC time.Time) ([]*model.Activity, error)
+	Query(userID string, queryFn func(a *model.Activity) bool) ([]*model.Activity, error)
 }
 
 // JSONUserDB is an easy UserDB stores data in a JSON file.
