@@ -3,13 +3,13 @@ package db
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/ebiiim/goki"
 	"github.com/ebiiim/goki/model"
 )
 
@@ -43,11 +43,11 @@ func NewJSONUserDB(filePath string) (*JSONUserDB, error) {
 	}
 	if isFile(d.filePath) {
 		if err := d.load(); err != nil {
-			return nil, err
+			return nil, goki.ErrDBOpen(err)
 		}
 	} else {
 		if err := d.save(); err != nil {
-			return nil, err
+			return nil, goki.ErrDBOpen(err)
 		}
 	}
 	return d, nil
@@ -57,11 +57,11 @@ func (d *JSONUserDB) load() error {
 	// Load JSON.
 	f, err := ioutil.ReadFile(d.filePath)
 	if err != nil {
-		return err
+		return goki.ErrDBOpen(err)
 	}
 	var db map[string]*model.User
 	if err := json.Unmarshal(f, &db); err != nil {
-		return err
+		return goki.ErrDBOpen(err)
 	}
 	d.db = db
 	return nil
@@ -78,9 +78,10 @@ func (d *JSONUserDB) save() error {
 	return nil
 }
 
+// Close saves data to the database JSON file.
 func (d *JSONUserDB) Close() error {
 	if err := d.save(); err != nil {
-		return err
+		return goki.ErrDBClose(err)
 	}
 	return nil
 }
@@ -91,7 +92,7 @@ func (d *JSONUserDB) Get(userID string) (*model.User, error) {
 	defer d.mu.Unlock()
 	u, ok := d.db[userID]
 	if !ok {
-		return nil, errors.New("user not found")
+		return nil, goki.ErrInvalidUser(errors.New(userID))
 	}
 	return u, nil
 }
@@ -99,7 +100,7 @@ func (d *JSONUserDB) Get(userID string) (*model.User, error) {
 // Add adds an user.
 func (d *JSONUserDB) Add(user *model.User) error {
 	if _, err := d.Get(user.ID); err == nil {
-		return errors.New("user already exist")
+		return goki.ErrUserAlreadyExist(errors.New(user.ID))
 	}
 	u := model.NewUser(user.ID, user.Name, user.Twitter.ID)
 	d.mu.Lock()
@@ -125,11 +126,11 @@ func NewJSONActivityDB(filePath string) (*JSONActivityDB, error) {
 	}
 	if isFile(d.filePath) {
 		if err := d.load(); err != nil {
-			return nil, err
+			return nil, goki.ErrDBOpen(err)
 		}
 	} else {
 		if err := d.save(); err != nil {
-			return nil, err
+			return nil, goki.ErrDBOpen(err)
 		}
 	}
 	return d, nil
@@ -170,16 +171,18 @@ func (d *JSONActivityDB) save() error {
 	return nil
 }
 
+// Close saves data to the database JSON file.
 func (d *JSONActivityDB) Close() error {
 	if err := d.save(); err != nil {
-		return err
+		return goki.ErrDBClose(err)
 	}
 	return nil
 }
 
 // Add adds an activity.
 // This method DOES NOT validate Activity.UserID in the given activity.
-// If an activity in DB has same timestamp with the given activity, store the given one with timestamp++.
+// In this UserDB implementation, if an activity in DB has same timestamp with the given activity, then store the given one with timestamp++.
+// Always returns nil
 func (d *JSONActivityDB) Add(act *model.Activity) error {
 	// init
 	if chk, ok := d.db[act.UserID]; !ok || chk == nil {
@@ -201,12 +204,16 @@ func (d *JSONActivityDB) Add(act *model.Activity) error {
 	return nil
 }
 
+// Query returns a slice of Activity (may be empty).
+// This method DOES NOT validate Activity.UserID in the given activity.
+// Just returns an empty slice when the given userID is invalid.
+// Always returns nil
 func (d *JSONActivityDB) Query(userID string, queryFn func(a *model.Activity) bool) ([]*model.Activity, error) {
+	var ret []*model.Activity
 	al, ok := d.db[userID]
 	if !ok {
-		return nil, errors.New("invalid user or the user has no activities")
+		return ret, nil
 	}
-	var ret []*model.Activity
 	for _, v := range al {
 		if queryFn(v) {
 			ret = append(ret, v)
@@ -215,13 +222,12 @@ func (d *JSONActivityDB) Query(userID string, queryFn func(a *model.Activity) bo
 	return ret, nil
 }
 
+// QueryFuncTime returns a queryFn for ActivityDB.Query method.
 func QueryFuncTime(afterUTC time.Time, beforeUTC time.Time) func(a *model.Activity) bool {
 	return func(a *model.Activity) bool {
 		if a.TimeUTC.After(afterUTC) && a.TimeUTC.Before(beforeUTC) {
-			fmt.Printf("T: %v - %v | %v\n", afterUTC.String(), beforeUTC.String(), a.TimeUTC.String())
 			return true
 		}
-		fmt.Printf("F: %v - %v | %v\n", afterUTC.String(), beforeUTC.String(), a.TimeUTC.String())
 		return false
 	}
 }

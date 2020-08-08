@@ -238,7 +238,7 @@ func TestJSONActivityDB_Query(t *testing.T) {
 		expNum  int
 		isErr   bool
 	}{
-		{"F_taro", d, "000", db.QueryFuncTime(UTC202008Begin, UTC202009Begin), 0, true},
+		{"taro_invalid_user", d, "000", db.QueryFuncTime(UTC202008Begin, UTC202009Begin), 0, false},
 		{"alice_UTC202008", d, U1.ID, db.QueryFuncTime(UTC202008Begin, UTC202009Begin), 3, false},
 		{"alice_JST202008", d, U1.ID, db.QueryFuncTime(JST202008Begin, JST202009Begin), 2, false},
 		{"alice_UTC202109", d, U1.ID, db.QueryFuncTime(UTC202109Begin, UTC202110Begin), 0, false},

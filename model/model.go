@@ -34,6 +34,26 @@ type Goki struct {
 	L int
 }
 
+// NewGoki initializes a Goki.
+func NewGoki(numS, numM, numL int) *Goki {
+	return &Goki{
+		S: numS,
+		M: numM,
+		L: numL,
+	}
+}
+
+// GokiSum returns sum of multiple *Goki.
+func GokiSum(g ...*Goki) *Goki {
+	ret := NewGoki(0, 0, 0)
+	for _, gg := range g {
+		ret.S += gg.S
+		ret.M += gg.M
+		ret.L += gg.L
+	}
+	return ret
+}
+
 // Activity contains an activity.
 type Activity struct {
 	UserID  string
@@ -47,10 +67,6 @@ func NewActivity(userID string, timeUTC time.Time, numS, numM, numL int) *Activi
 	return &Activity{
 		UserID:  userID,
 		TimeUTC: timeUTC,
-		G: &Goki{
-			S: numS,
-			M: numM,
-			L: numL,
-		},
+		G:       NewGoki(numS, numM, numL),
 	}
 }
