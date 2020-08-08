@@ -47,8 +47,8 @@ func (a *App) GetUser(userID string) (*model.User, error) {
 	return u, nil
 }
 
-func (a *App) Action(userID string, numS, numM, numL int) (*model.Activity, error) {
-	act := model.NewActivity(userID, goki.TimeNow(), numS, numM, numL)
+func (a *App) Action(user *model.User, numS, numM, numL int) (*model.Activity, error) {
+	act := model.NewActivity(user.ID, goki.TimeNow(), numS, numM, numL)
 	if err := a.Activities.Add(act); err != nil {
 		return nil, fmt.Errorf("App.Action: %w", err)
 	}
