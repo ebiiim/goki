@@ -1,11 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/gorilla/sessions"
 
 	"github.com/ebiiim/goki/api"
 	"github.com/ebiiim/goki/app"
@@ -14,7 +16,6 @@ import (
 )
 
 func main() {
-	fmt.Println(config.Params)
 	udb, err := db.NewJSONUserDB("./userDB.json")
 	if err != nil {
 		panic(err)
@@ -24,20 +25,23 @@ func main() {
 		panic(err)
 	}
 	ap := app.NewApp(udb, adb)
-	s := api.NewServer(ap)
+	ss := sessions.NewFilesystemStore("./sessions", []byte(config.Params.Session.Key))
+	s := api.NewServer(ap, ss)
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh, syscall.SIGINT)
 	done := make(chan struct{})
 	go func() {
 		if err := http.ListenAndServe(config.Params.Server.Address, s.R); err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
 	}()
-	fmt.Printf("%s://%s\n", config.Params.Server.Scheme, config.Params.Server.Address)
+	log.Printf("%s://%s\n", config.Params.Server.Scheme, config.Params.Server.Address)
 	go func() {
 		<-sigCh
-		fmt.Println("SIGINT Received!")
-		ap.Close()
+		log.Println("SIGINT Received!")
+		if err := s.Close(); err != nil {
+			log.Println(err)
+		}
 		close(done)
 	}()
 	<-done

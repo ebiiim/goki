@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+{{template "head"}}
+
+<body>
+    <header class="container">
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <h1>Ｇやっつけた!</h1>
+                <p class="lead">{{ .UserName }} さんの新しい戦果</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="row mt-4">
+            <div class="col-4 text-center">
+                <div class="form-group">
+                    <label for="didSmall">小型</label>
+                    <select class="form-control" id="didSmall">
+                        {{ range $i, $v := .FormMax }}
+                            <option>{{ $i }}</option>
+                        {{ end }}
+                    </select>
+                </div>
+            </div>
+            <div class="col-4 text-center">
+                <div class="form-group">
+                    <label for="didMedium">中型</label>
+                    <select class="form-control" id="didMedium">
+                        {{ range $i, $v := .FormMax }}
+                            <option>{{ $i }}</option>
+                        {{ end }}
+                    </select>
+                </div>
+            </div>
+            <div class="col-4 text-center">
+                <div class="form-group">
+                    <label for="didLarge">大型</label>
+                    <select class="form-control" id="didLarge">
+                        {{ range $i, $v := .FormMax }}
+                            <option>{{ $i }}</option>
+                        {{ end }}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <button class="btn btn-sm btn-primary">確定</button>
+                <a href="/me"><button class="btn btn-sm btn-secondary">戻る</button></a>
+            </div>
+        </div>
+    </div>
+
+    {{template "footer"}}
+
+</body>
+
+</html>

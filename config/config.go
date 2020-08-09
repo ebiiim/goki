@@ -19,6 +19,11 @@ type config struct {
 		Address  string `json:"address"`
 		BasePath string `json:"base_path"`
 	} `json:"server"`
+	Web struct {
+		TemplateDir string `json:"template_dir"`
+		StaticDir   string `json:"static_dir"`
+		ServeStatic bool   `json:"serve_static"`
+	} `json:"web"`
 	Session struct {
 		Key string `json:"key"`
 	} `json:"session"`

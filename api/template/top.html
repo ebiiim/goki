@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+{{template "head"}}
+
+<body>
+    <header class="container">
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <h1>Ｇやっつけた！</h1>
+                <p class="lead">今まで駆除したＧの数を覚えていますか？</p>
+                {{ if eq .IsLoggedIn false }}
+                    <a href="/login/twitter"><img src="static/sign_in_with_twitter.png"></a>
+                {{else}}
+                    <a href="/me"><button class="btn btn-sm btn-primary">{{ .UserName }} さんのマイページ</button></a>
+                    <a href="/logout"><button class="btn btn-sm btn-secondary">ログアウト</button></a>
+                {{end}}
+            </div>
+        </div>
+    </header>
+
+    {{template "footer"}}
+
+</body>
+
+</html>

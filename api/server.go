@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/ebiiim/goki"
@@ -24,14 +26,7 @@ import (
 // Log is the Logo logger for this package.
 var Log = logo.New(logo.DEBUG, nil)
 
-// Server contains everything to serve the web service.
-type Server struct {
-	A *app.App
-	R *mux.Router
-	S sessions.Store
-}
-
-// ctxKey represents keys used in context.WithValue.
+// ctxKey identifies the key used in context.WithValue.
 type ctxKey int
 
 const (
@@ -48,29 +43,87 @@ func valuesExist(sess *sessions.Session, key ...string) bool {
 	return true
 }
 
+// tmplKey identifies the page.
+type tmplKey int
+
+const (
+	tmplTop tmplKey = iota
+	tmplMe
+	tmplDo
+)
+
+// template helper
+func (s *Server) mustTmpl(key tmplKey, filenames ...string) {
+	t := template.Must(template.ParseFiles(filenames...))
+	s.T[key] = t
+}
+
 // aliases
-var base = config.Params.Server.BasePath
+var (
+	pathBase            = config.Params.Server.BasePath
+	pathStatic          = path.Join(pathBase, "static/")
+	pathTop             = path.Join(pathBase, "")
+	pathMe              = path.Join(pathBase, "me")
+	pathDo              = path.Join(pathBase, "do")
+	pathLogout          = path.Join(pathBase, "logout")
+	pathTwitterLogin    = path.Join(pathBase, "login/twitter")
+	pathTwitterCallback = config.Params.Twitter.CallbackPath
+	urlTwitterCallback  = fmt.Sprintf("%s://%s%s", config.Params.Server.Scheme, config.Params.Server.Address, config.Params.Twitter.CallbackPath)
+	dirTmpl             = config.Params.Web.TemplateDir
+	dirStatic           = config.Params.Web.StaticDir
+)
+
+// Server contains everything to serve the web service.
+type Server struct {
+	A *app.App
+	S sessions.Store
+	R *mux.Router
+	T map[tmplKey]*template.Template
+}
 
 // NewServer initializes a Server.
-func NewServer(ap *app.App) *Server {
+func NewServer(ap *app.App, ss sessions.Store) *Server {
 	s := &Server{}
 	s.A = ap
+	s.S = ss
 	s.R = mux.NewRouter()
-	s.S = sessions.NewFilesystemStore("./sessions", []byte(config.Params.Session.Key))
-	s.R.HandleFunc(base, s.checkLogin(s.serveTop))
-	s.R.HandleFunc(path.Join(base, "me"), s.checkLogin(s.notLoggedInGoTop(s.serveMe)))
-	s.R.HandleFunc(path.Join(base, "logout"), s.serveLogout)
+	s.T = map[tmplKey]*template.Template{}
+
+	// Route and Template
+	if config.Params.Web.ServeStatic {
+		s.R.PathPrefix(pathStatic).Handler(http.StripPrefix(pathStatic, http.FileServer(http.Dir(dirStatic))))
+	}
+
+	s.R.HandleFunc(pathTop, s.checkLogin(s.serveTop))
+	s.mustTmpl(tmplTop, filepath.Join(dirTmpl, "top.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_footer.html"))
+
+	s.R.HandleFunc(pathMe, s.checkLogin(s.notLoggedInGoTop(s.serveMe)))
+	s.mustTmpl(tmplMe, filepath.Join(dirTmpl, "me.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_footer.html"))
+
+	s.R.HandleFunc(pathDo, s.checkLogin(s.notLoggedInGoTop(s.serveDo)))
+	s.mustTmpl(tmplDo, filepath.Join(dirTmpl, "do.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_footer.html"))
+
+	s.R.HandleFunc(pathLogout, s.serveLogout)
+
 	// Twitter login
-	cb := fmt.Sprintf("%s://%s%s", config.Params.Server.Scheme, config.Params.Server.Address, config.Params.Twitter.CallbackPath)
 	oauth1Config := &oauth1.Config{
 		ConsumerKey:    config.Params.Twitter.Key,
 		ConsumerSecret: config.Params.Twitter.Secret,
-		CallbackURL:    cb,
+		CallbackURL:    urlTwitterCallback,
 		Endpoint:       twitterOAuth1.AuthorizeEndpoint,
 	}
-	s.R.Handle(path.Join(base, "login/twitter"), twitter.LoginHandler(oauth1Config, nil))
-	s.R.Handle(path.Join(base, config.Params.Twitter.CallbackPath), twitter.CallbackHandler(oauth1Config, s.twitterLogin(), nil))
+	s.R.Handle(pathTwitterLogin, twitter.LoginHandler(oauth1Config, nil))
+	s.R.Handle(pathTwitterCallback, twitter.CallbackHandler(oauth1Config, s.twitterLogin(), nil))
+
 	return s
+}
+
+// Close closes the server.
+func (s *Server) Close() error {
+	if err := s.A.Close(); err != nil {
+		return fmt.Errorf("Server.Close: %w", err)
+	}
+	return nil
 }
 
 // checkLogin middleware checks login.
@@ -124,7 +177,7 @@ func (s *Server) notLoggedInGoTop(next func(w http.ResponseWriter, r *http.Reque
 		u, ok := r.Context().Value(ctxLoginUser).(*model.User)
 		if !ok || u == nil {
 			Log.D("notLoggedInGoTop: go top")
-			http.Redirect(w, r, path.Join(base, "login"), http.StatusFound)
+			http.Redirect(w, r, pathTop, http.StatusFound)
 			return
 		}
 		next(w, r)
@@ -133,7 +186,7 @@ func (s *Server) notLoggedInGoTop(next func(w http.ResponseWriter, r *http.Reque
 
 // twitterLogin handles Twitter OAuth1 callback.
 // - Check Twitter user.
-//   - (A) Error: redirect to the login page.
+//   - (A) Error: redirect to the top page.
 //   - (B) New Twitter user: create a new Goki user and login.
 //   - (C) Known Twitter user: login with the associated Goki user and login.
 //   - (X) Unexpected error:  500
@@ -144,7 +197,7 @@ func (s *Server) twitterLogin() http.Handler {
 		twitterUser, err := twitter.UserFromContext(ctx)
 		if err != nil {
 			Log.D("twitterLogin: twitter oauth failed")
-			http.Redirect(w, r, path.Join(base, "login"), http.StatusFound)
+			http.Redirect(w, r, pathTop, http.StatusFound)
 			return // (A)
 		}
 		// check Twitter User
@@ -183,7 +236,7 @@ func (s *Server) twitterLogin() http.Handler {
 			return // (X)
 		}
 		Log.D("twitterLogin: redirect to /me")
-		http.Redirect(w, r, path.Join(base, "me"), http.StatusFound)
+		http.Redirect(w, r, pathMe, http.StatusFound)
 		return // (B) or (C)
 	}
 	return http.HandlerFunc(fn)
@@ -203,7 +256,7 @@ func (s *Server) serveLogout(w http.ResponseWriter, r *http.Request) {
 	}
 	if sess.ID == "" {
 		Log.D("serveLogout: no session so redirect to /top")
-		http.Redirect(w, r, base, http.StatusFound)
+		http.Redirect(w, r, pathTop, http.StatusFound)
 		return // (A)
 	}
 	Log.D("serveLogout: delete session")
@@ -214,34 +267,76 @@ func (s *Server) serveLogout(w http.ResponseWriter, r *http.Request) {
 		return // (X)
 	}
 	Log.D("serveLogin: ok! now redirect to /top")
-	http.Redirect(w, r, base, http.StatusFound)
+	http.Redirect(w, r, pathTop, http.StatusFound)
 	return // (A)
 }
 
 func (s *Server) serveTop(w http.ResponseWriter, r *http.Request) {
 	Log.D("serveTop")
+
+	tmplStruct := struct {
+		IsLoggedIn bool
+		UserName   string
+	}{}
+
 	u, ok := r.Context().Value(ctxLoginUser).(*model.User)
-	isLoggedIn := true
-	if !ok || u == nil {
-		Log.D("serveTop: not login")
-		isLoggedIn = false
+	if ok && u != nil {
+		Log.D("serveTop: logged in")
+		tmplStruct.IsLoggedIn = true
+		tmplStruct.UserName = u.Name
 	}
-	if isLoggedIn {
-		fmt.Fprintf(w, "<html><body>Gやっつけた！<br>今まで駆除したGの数を覚えていますか？<br>%vさんですね！ <a href='/me'>マイページ</a> <a href='/logout'>ログアウト</a></body>", u.Name)
+
+	if err := s.T[tmplTop].Execute(w, tmplStruct); err != nil {
+		Log.D("serveTop: template.Execute error")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "<html><body>Gやっつけた！<br>今まで駆除したGの数を覚えていますか？<br><a href='/login/twitter'>Login with Twitter</a></body>")
-	return
 }
 
 func (s *Server) serveMe(w http.ResponseWriter, r *http.Request) {
 	Log.D("serveMe")
+
+	tmplStruct := struct {
+		UserName string
+		G        *model.Goki
+		Year     int
+	}{}
+
 	u, _ := r.Context().Value(ctxLoginUser).(*model.User)
-	g, err := s.A.CountByYear(u.ID, time.Now().Year(), time.Local)
+	year := time.Now().Year()
+	g, err := s.A.CountByYear(u.ID, year, time.Local)
 	if err != nil {
-		fmt.Fprintf(w, "err")
+		Log.D("serveMe: could not CountByYear")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Fprintf(w, "<html><body>Gやっつけた！<br>%vさん、こんにちは！<br>今年の戦績: %v<br><a href='/'>トップ</a> <a href='/logout'>ログアウト</a></body>", u.Name, g)
-	return
+	tmplStruct.UserName = u.Name
+	tmplStruct.G = g
+	tmplStruct.Year = year
+
+	if err := s.T[tmplMe].Execute(w, tmplStruct); err != nil {
+		Log.D("serveMe: template.Execute error")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Server) serveDo(w http.ResponseWriter, r *http.Request) {
+	Log.D("serveDo")
+
+	tmplStruct := struct {
+		UserName string
+		FormMax  []struct{}
+	}{
+		FormMax: make([]struct{}, 21), // HACK: range(0, 21)
+	}
+
+	u, _ := r.Context().Value(ctxLoginUser).(*model.User)
+	tmplStruct.UserName = u.Name
+
+	if err := s.T[tmplDo].Execute(w, tmplStruct); err != nil {
+		Log.D("serveMe: template.Execute error")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

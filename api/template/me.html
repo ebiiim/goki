@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+{{template "head"}}
+
+<body>
+    <header class="container">
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <h1>Ｇやっつけた!</h1>
+                <p class="lead">{{ .UserName }} さんのマイページ</p>
+                    <a href="/do"><button class="btn btn-sm btn-primary">新しい戦果</button></a>
+                    <a href="/"><button class="btn btn-sm btn-secondary">トップページ</button></a>
+                    <a href="/logout"><button class="btn btn-sm btn-secondary">ログアウト</button></a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <hr class="small">
+                <h2>{{ .Year }}年の戦果</h2>
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">小型</th>
+                        <th scope="col">中型</th>
+                        <th scope="col">大型</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>{{ .G.S }}匹</td>
+                        <td>{{ .G.M }}匹</td>
+                        <td>{{ .G.L }}匹</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {{template "footer"}}
+
+</body>
+
+</html>
