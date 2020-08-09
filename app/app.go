@@ -28,7 +28,7 @@ func (a *App) Close() error {
 	if err1 == nil && err2 == nil {
 		return nil
 	}
-	return goki.ErrAppClose(fmt.Errorf("close UserDB=%v ActivityDB=%v", err2, err1))
+	return fmt.Errorf("%w: UserDB=%v ActivityDB=%v", goki.ErrAppClose, err2, err1)
 }
 
 func (a *App) AddUser(userID, userName, twitterID string) (*model.User, error) {
@@ -43,6 +43,14 @@ func (a *App) GetUser(userID string) (*model.User, error) {
 	u, err := a.Users.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("App.GetUser: %w", err)
+	}
+	return u, nil
+}
+
+func (a *App) GetUserByTwitterID(twitterID string) (*model.User, error) {
+	u, err := a.Users.GetByTwitterID(twitterID)
+	if err != nil {
+		return nil, fmt.Errorf("App.GetUserByTwitterID: %w", err)
 	}
 	return u, nil
 }

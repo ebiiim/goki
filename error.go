@@ -1,28 +1,28 @@
 package goki
 
 import (
+	"errors"
 	"fmt"
 )
 
 var (
 	// ErrDBOpen represents could not open DB error.
-	ErrDBOpen = func(err error) error {
-		return fmt.Errorf("could not open DB: %w", err)
-	}
+	ErrDBOpen = errors.New("could not open DB")
 	// ErrDBClose represents could not close DB error.
-	ErrDBClose = func(err error) error {
-		return fmt.Errorf("could not close DB: %w", err)
-	}
+	ErrDBClose = errors.New("could not close DB")
 	// ErrAppClose represents could not close App error.
-	ErrAppClose = func(err error) error {
-		return fmt.Errorf("could not close App: %w", err)
-	}
-	// ErrInvalidUser represents invalid user error.
-	ErrInvalidUser = func(err error) error {
-		return fmt.Errorf("invalid user: %w", err)
-	}
+	ErrAppClose = errors.New("could not close App")
+	// ErrUserNotFound represents user not found error.
+	ErrUserNotFound = errors.New("user not found")
 	// ErrUserAlreadyExist represents user already exist error.
-	ErrUserAlreadyExist = func(err error) error {
-		return fmt.Errorf("user already exist: %w", err)
-	}
+	ErrUserAlreadyExist = errors.New("user already exist")
 )
+
+// ErrWrap returns a new error.
+// Zero or one cause is accepted.
+func ErrWrap(err error, cause ...error) error {
+	if len(cause) == 0 {
+		return err
+	}
+	return fmt.Errorf("%v: %w", err, cause[0])
+}

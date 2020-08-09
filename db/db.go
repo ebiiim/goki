@@ -2,8 +2,6 @@ package db
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -45,11 +43,11 @@ func NewJSONUserDB(filePath string) (*JSONUserDB, error) {
 	}
 	if isFile(d.filePath) {
 		if err := d.load(); err != nil {
-			return nil, goki.ErrDBOpen(err)
+			return nil, goki.ErrWrap(goki.ErrDBOpen, err)
 		}
 	} else {
 		if err := d.save(); err != nil {
-			return nil, goki.ErrDBOpen(err)
+			return nil, goki.ErrWrap(goki.ErrDBOpen, err)
 		}
 	}
 	return d, nil
@@ -59,11 +57,11 @@ func (d *JSONUserDB) load() error {
 	// Load JSON.
 	f, err := ioutil.ReadFile(d.filePath)
 	if err != nil {
-		return goki.ErrDBOpen(err)
+		return goki.ErrWrap(goki.ErrDBOpen, err)
 	}
 	var db map[string]*model.User
 	if err := json.Unmarshal(f, &db); err != nil {
-		return goki.ErrDBOpen(err)
+		return goki.ErrWrap(goki.ErrDBOpen, err)
 	}
 	d.db = db
 	return nil
@@ -83,7 +81,7 @@ func (d *JSONUserDB) save() error {
 // Close saves data to the database JSON file.
 func (d *JSONUserDB) Close() error {
 	if err := d.save(); err != nil {
-		return goki.ErrDBClose(err)
+		return goki.ErrWrap(goki.ErrDBClose, err)
 	}
 	return nil
 }
@@ -94,7 +92,7 @@ func (d *JSONUserDB) Get(userID string) (*model.User, error) {
 	defer d.mu.Unlock()
 	u, ok := d.db[userID]
 	if !ok {
-		return nil, goki.ErrInvalidUser(errors.New(userID))
+		return nil, goki.ErrUserNotFound
 	}
 	return u, nil
 }
@@ -108,16 +106,16 @@ func (d *JSONUserDB) GetByTwitterID(twitterID string) (*model.User, error) {
 			return u, nil
 		}
 	}
-	return nil, goki.ErrInvalidUser(fmt.Errorf("Twitter %v", twitterID))
+	return nil, goki.ErrUserNotFound
 }
 
 // Add adds an user.
 func (d *JSONUserDB) Add(user *model.User) error {
 	if _, err := d.Get(user.ID); err == nil {
-		return goki.ErrUserAlreadyExist(errors.New(user.ID))
+		return goki.ErrUserAlreadyExist
 	}
 	if _, err := d.GetByTwitterID(user.Twitter.ID); err == nil {
-		return goki.ErrUserAlreadyExist(fmt.Errorf("Twitter %v", user.Twitter.ID))
+		return goki.ErrUserAlreadyExist
 	}
 	u := model.NewUser(user.ID, user.Name, user.Twitter.ID)
 	d.mu.Lock()
@@ -143,11 +141,11 @@ func NewJSONActivityDB(filePath string) (*JSONActivityDB, error) {
 	}
 	if isFile(d.filePath) {
 		if err := d.load(); err != nil {
-			return nil, goki.ErrDBOpen(err)
+			return nil, goki.ErrWrap(goki.ErrDBOpen, err)
 		}
 	} else {
 		if err := d.save(); err != nil {
-			return nil, goki.ErrDBOpen(err)
+			return nil, goki.ErrWrap(goki.ErrDBOpen, err)
 		}
 	}
 	return d, nil
@@ -191,7 +189,7 @@ func (d *JSONActivityDB) save() error {
 // Close saves data to the database JSON file.
 func (d *JSONActivityDB) Close() error {
 	if err := d.save(); err != nil {
-		return goki.ErrDBClose(err)
+		return goki.ErrWrap(goki.ErrDBClose, err)
 	}
 	return nil
 }
