@@ -1,0 +1,5 @@
+config.json
+activityDB.json
+userDB.json
+sessions/
+dist/
