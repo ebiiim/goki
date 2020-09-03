@@ -1,11 +1,11 @@
 package main
 
 import (
+	"context"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
+	"time"
 
 	"github.com/gorilla/sessions"
 
@@ -15,34 +15,39 @@ import (
 	"github.com/ebiiim/goki/db"
 )
 
+const (
+	userDBPath     = "./userDB.json"
+	activityDBPath = "./activityDB.json"
+	sessionDirPath = "./sessions"
+)
+
 func main() {
-	udb, err := db.NewJSONUserDB("./userDB.json")
+	udb, err := db.NewJSONUserDB(userDBPath)
 	if err != nil {
-		panic(err)
+		log.Fatalf("could not user database file %s: %v", userDBPath, err)
 	}
-	adb, err := db.NewJSONActivityDB("./activityDB.json")
+	adb, err := db.NewJSONActivityDB(activityDBPath)
 	if err != nil {
-		panic(err)
+		log.Fatalf("could not activity database file %s: %v", activityDBPath, err)
 	}
 	ap := app.NewApp(udb, adb)
-	ss := sessions.NewFilesystemStore("./sessions", []byte(config.Params.Session.Key))
-	s := api.NewServer(ap, ss)
-	sigCh := make(chan os.Signal)
-	signal.Notify(sigCh, syscall.SIGINT)
-	done := make(chan struct{})
+	ss := sessions.NewFilesystemStore(sessionDirPath, []byte(config.Params.Session.Key))
+	s := api.NewServer(config.Params.Server.Scheme, config.Params.Server.Address, ap, ss)
 	go func() {
-		if err := http.ListenAndServe(config.Params.Server.Address, s.R); err != nil {
+		if err := s.ListenAndServe(); err != nil {
 			log.Fatalln(err)
 		}
 	}()
 	log.Printf("%s://%s\n", config.Params.Server.Scheme, config.Params.Server.Address)
-	go func() {
-		<-sigCh
-		log.Println("SIGINT Received!")
-		if err := s.Close(); err != nil {
-			log.Println(err)
-		}
-		close(done)
-	}()
-	<-done
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt)
+	<-c
+	log.Println("SIGINT Received!")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := s.Shutdown(ctx); err != nil {
+		log.Println(err)
+	}
 }

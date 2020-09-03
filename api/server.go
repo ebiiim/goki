@@ -10,17 +10,17 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ebiiim/goki"
-	"github.com/ebiiim/goki/app"
-	"github.com/ebiiim/goki/config"
-	"github.com/ebiiim/goki/model"
-
 	"github.com/dghubble/gologin/v2/twitter"
 	"github.com/dghubble/oauth1"
 	twitterOAuth1 "github.com/dghubble/oauth1/twitter"
 	"github.com/ebiiim/logo"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+
+	"github.com/ebiiim/goki"
+	"github.com/ebiiim/goki/app"
+	"github.com/ebiiim/goki/config"
+	"github.com/ebiiim/goki/model"
 )
 
 // Log is the Logo logger for this package.
@@ -75,35 +75,44 @@ var (
 
 // Server contains everything to serve the web service.
 type Server struct {
+	http.Server
 	A *app.App
 	S sessions.Store
-	R *mux.Router
 	T map[tmplKey]*template.Template
 }
 
 // NewServer initializes a Server.
-func NewServer(ap *app.App, ss sessions.Store) *Server {
+func NewServer(scheme, addr string, ap *app.App, ss sessions.Store) *Server {
+	r := mux.NewRouter()
+
 	s := &Server{}
 	s.A = ap
 	s.S = ss
-	s.R = mux.NewRouter()
 	s.T = map[tmplKey]*template.Template{}
+	s.Handler = r
+	s.WriteTimeout = 15 * time.Second
+	s.ReadTimeout = 15 * time.Second
+	s.IdleTimeout = 60 * time.Second
+	s.Addr = addr
+	if scheme == "https" {
+		panic("not implemented") // TODO
+	}
 
 	// Route and Template
 	if config.Params.Web.ServeStatic {
-		s.R.PathPrefix(pathStatic).Handler(http.StripPrefix(pathStatic, http.FileServer(http.Dir(dirStatic))))
+		r.PathPrefix(pathStatic).Handler(http.StripPrefix(pathStatic, http.FileServer(http.Dir(dirStatic))))
 	}
 
-	s.R.HandleFunc(pathTop, s.checkLogin(s.serveTop))
+	r.HandleFunc(pathTop, s.checkLogin(s.serveTop))
 	s.mustTmpl(tmplTop, filepath.Join(dirTmpl, "top.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_footer.html"))
 
-	s.R.HandleFunc(pathMe, s.checkLogin(s.notLoggedInGoTop(s.serveMe)))
+	r.HandleFunc(pathMe, s.checkLogin(s.notLoggedInGoTop(s.serveMe)))
 	s.mustTmpl(tmplMe, filepath.Join(dirTmpl, "me.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_footer.html"))
 
-	s.R.HandleFunc(pathDo, s.checkLogin(s.notLoggedInGoTop(s.serveDo)))
+	r.HandleFunc(pathDo, s.checkLogin(s.notLoggedInGoTop(s.serveDo)))
 	s.mustTmpl(tmplDo, filepath.Join(dirTmpl, "do.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_footer.html"))
 
-	s.R.HandleFunc(pathLogout, s.serveLogout)
+	r.HandleFunc(pathLogout, s.serveLogout)
 
 	// Twitter login
 	oauth1Config := &oauth1.Config{
@@ -112,16 +121,18 @@ func NewServer(ap *app.App, ss sessions.Store) *Server {
 		CallbackURL:    urlTwitterCallback,
 		Endpoint:       twitterOAuth1.AuthorizeEndpoint,
 	}
-	s.R.Handle(pathTwitterLogin, twitter.LoginHandler(oauth1Config, nil))
-	s.R.Handle(pathTwitterCallback, twitter.CallbackHandler(oauth1Config, s.twitterLogin(), nil))
+	r.Handle(pathTwitterLogin, twitter.LoginHandler(oauth1Config, nil))
+	r.Handle(pathTwitterCallback, twitter.CallbackHandler(oauth1Config, s.twitterLogin(), nil))
 
 	return s
 }
 
-// Close closes the server.
-func (s *Server) Close() error {
-	if err := s.A.Close(); err != nil {
-		return fmt.Errorf("Server.Close: %w", err)
+// Shutdown closes the server.
+func (s *Server) Shutdown(ctx context.Context) error {
+	err1 := s.Server.Shutdown(ctx)
+	err2 := s.A.Close()
+	if err1 != nil || err2 != nil {
+		return fmt.Errorf("Server.Close: err1=%v err2=%v", err1, err2)
 	}
 	return nil
 }
