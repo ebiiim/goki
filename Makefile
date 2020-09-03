@@ -8,7 +8,7 @@ build:
 	cp -r api/views dist/server
 	cp -r api/static dist/server
 	cp config/config.json.sample dist/server/config.json.sample
-	mkdir dist/server/sessions
+	mkdir -p dist/server/sessions
 
 clean:
 	rm -rf dist
