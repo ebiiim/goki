@@ -3,14 +3,19 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
+	"time"
 )
 
 const (
-	SessionName          = "goki"
-	SessionSecret        = "secret"
-	SessionAuthenticated = "authenticated"
-	SessionTwitterID     = "twitter_id"
-	SessionUserID        = "user_id"
+	SessionName           = "goki"
+	SessionSecret         = "secret"
+	SessionAuthenticated  = "authenticated"
+	SessionTwitterID      = "twitter_id"
+	SessionUserID         = "user_id"
+	ServerWriteTimeout    = 15 * time.Second
+	ServerReadTimeout     = 15 * time.Second
+	ServerIdleTimeout     = 60 * time.Second
+	ServerShutdownTimeout = 60 * time.Second
 )
 
 type config struct {

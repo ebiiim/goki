@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/gorilla/sessions"
 
@@ -45,7 +44,7 @@ func main() {
 	<-c
 	log.Println("SIGINT Received!")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.ServerShutdownTimeout)
 	defer cancel()
 	if err := s.Shutdown(ctx); err != nil {
 		log.Println(err)

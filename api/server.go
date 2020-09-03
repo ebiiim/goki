@@ -90,9 +90,9 @@ func NewServer(scheme, addr string, ap *app.App, ss sessions.Store) *Server {
 	s.S = ss
 	s.T = map[tmplKey]*template.Template{}
 	s.Handler = r
-	s.WriteTimeout = 15 * time.Second
-	s.ReadTimeout = 15 * time.Second
-	s.IdleTimeout = 60 * time.Second
+	s.WriteTimeout = config.ServerWriteTimeout
+	s.ReadTimeout = config.ServerReadTimeout
+	s.IdleTimeout = config.ServerIdleTimeout
 	s.Addr = addr
 	if scheme == "https" {
 		panic("not implemented") // TODO
