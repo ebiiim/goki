@@ -104,13 +104,13 @@ func NewServer(scheme, addr string, ap *app.App, ss sessions.Store) *Server {
 	}
 
 	r.HandleFunc(pathTop, s.checkLogin(s.serveTop))
-	s.mustTmpl(tmplTop, filepath.Join(dirTmpl, "top.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_footer.html"))
+	s.mustTmpl(tmplTop, filepath.Join(dirTmpl, "top.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_header.html"), filepath.Join(dirTmpl, "_footer.html"))
 
 	r.HandleFunc(pathMe, s.checkLogin(s.notLoggedInGoTop(s.serveMe)))
-	s.mustTmpl(tmplMe, filepath.Join(dirTmpl, "me.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_footer.html"))
+	s.mustTmpl(tmplMe, filepath.Join(dirTmpl, "me.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_header.html"), filepath.Join(dirTmpl, "_footer.html"))
 
 	r.HandleFunc(pathDo, s.checkLogin(s.notLoggedInGoTop(s.serveDo)))
-	s.mustTmpl(tmplDo, filepath.Join(dirTmpl, "do.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_footer.html"))
+	s.mustTmpl(tmplDo, filepath.Join(dirTmpl, "do.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_header.html"), filepath.Join(dirTmpl, "_footer.html"))
 
 	r.HandleFunc(pathLogout, s.serveLogout)
 

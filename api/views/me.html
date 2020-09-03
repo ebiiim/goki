@@ -4,37 +4,38 @@
 {{template "head"}}
 
 <body>
-    <header class="container">
-        <div class="row mt-4">
-            <div class="col-12 text-center">
-                <h1>Ｇやっつけた！</h1>
-                <p class="lead">{{ .UserName }} さんのマイページ</p>
-                    <a href="/do"><button class="btn btn-sm btn-primary">新しい戦果</button></a>
-                    <a href="/"><button class="btn btn-sm btn-secondary">トップページ</button></a>
-                    <a href="/logout"><button class="btn btn-sm btn-secondary">ログアウト</button></a>
-            </div>
-        </div>
-    </header>
+    {{template "header"}}
 
     <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <a href="/do"><button class="btn btn-sm btn-primary">新しい戦果</button></a>
+                <a href="/"><button class="btn btn-sm btn-secondary">トップページ</button></a>
+                <a href="/logout"><button class="btn btn-sm btn-secondary">ログアウト</button></a>
+            </div>
+        </div>
         <div class="row mt-4">
             <div class="col-12 text-center">
-                <hr class="small">
-                <h2>{{ .Year }}年の戦果</h2>
-                <table class="table">
+                <p class="lead">{{ .UserName }} さんの戦果</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-left">{{ .Year }}</h2>
+                <table class="table text-center">
                     <thead>
-                    <tr>
-                        <th scope="col">小型</th>
-                        <th scope="col">中型</th>
-                        <th scope="col">大型</th>
-                    </tr>
+                        <tr>
+                            <th scope="col">小型</th>
+                            <th scope="col">中型</th>
+                            <th scope="col">大型</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    <tr>
-                        <td>{{ .G.S }}匹</td>
-                        <td>{{ .G.M }}匹</td>
-                        <td>{{ .G.L }}匹</td>
-                    </tr>
+                        <tr>
+                            <td>{{ .G.S }}匹</td>
+                            <td>{{ .G.M }}匹</td>
+                            <td>{{ .G.L }}匹</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

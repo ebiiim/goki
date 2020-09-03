@@ -4,10 +4,11 @@
 {{template "head"}}
 
 <body>
-    <header class="container">
-        <div class="row mt-4">
+    {{template "header"}}
+
+    <div class="container">
+        <div class="row">
             <div class="col-12 text-center">
-                <h1>Ｇやっつけた！</h1>
                 <p class="lead">今まで駆除したＧの数を覚えていますか？</p>
                 {{ if eq .IsLoggedIn false }}
                     <a href="/login/twitter"><img src="static/sign_in_with_twitter.png"></a>
@@ -17,7 +18,7 @@
                 {{end}}
             </div>
         </div>
-    </header>
+    </div>
 
     {{template "footer"}}
 

@@ -4,10 +4,11 @@
 {{template "head"}}
 
 <body>
+    {{template "header"}}
+
     <header class="container">
         <div class="row mt-4">
             <div class="col-12 text-center">
-                <h1>Ｇやっつけた！</h1>
                 <p class="lead">{{ .UserName }} さんの新しい戦果</p>
             </div>
         </div>
@@ -20,7 +21,7 @@
                     <label for="didSmall">小型</label>
                     <select class="form-control" id="didSmall">
                         {{ range $i, $v := .FormMax }}
-                            <option>{{ $i }}</option>
+                        <option>{{ $i }}</option>
                         {{ end }}
                     </select>
                 </div>
@@ -30,7 +31,7 @@
                     <label for="didMedium">中型</label>
                     <select class="form-control" id="didMedium">
                         {{ range $i, $v := .FormMax }}
-                            <option>{{ $i }}</option>
+                        <option>{{ $i }}</option>
                         {{ end }}
                     </select>
                 </div>
@@ -40,7 +41,7 @@
                     <label for="didLarge">大型</label>
                     <select class="form-control" id="didLarge">
                         {{ range $i, $v := .FormMax }}
-                            <option>{{ $i }}</option>
+                        <option>{{ $i }}</option>
                         {{ end }}
                     </select>
                 </div>
