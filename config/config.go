@@ -57,4 +57,13 @@ func init() {
 	if err := json.Unmarshal(f, &Params); err != nil {
 		log.Fatalf("[FATAL] could not decode config file %v: %v", p, err)
 	}
+	// override credentials if env is set.
+	tk, ok := os.LookupEnv("TWITTER_CONSUMER_KEY")
+	if ok {
+		Params.Twitter.Key = tk
+	}
+	ts, ok := os.LookupEnv("TWITTER_CONSUMER_SECRET")
+	if ok {
+		Params.Twitter.Secret = ts
+	}
 }
