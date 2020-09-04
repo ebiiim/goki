@@ -3,14 +3,13 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
+	"os"
 	"time"
 )
 
 const (
-	SessionName = "goki"
-	// SessionSecret         = "secret"
-	// SessionAuthenticated  = "authenticated"
-	// SessionTwitterID      = "twitter_id"
+	SessionName           = "goki"
 	SessionUserID         = "user_id"
 	ServerWriteTimeout    = 15 * time.Second
 	ServerReadTimeout     = 15 * time.Second
@@ -47,11 +46,15 @@ type config struct {
 var Params config
 
 func init() {
-	f, err := ioutil.ReadFile("./config.json")
+	p, ok := os.LookupEnv("GOKI_CONFIG")
+	if !ok {
+		p = "./config.json"
+	}
+	f, err := ioutil.ReadFile(p)
 	if err != nil {
-		panic(err)
+		log.Fatalf("[FATAL] could not load config file %v: %v", p, err)
 	}
 	if err := json.Unmarshal(f, &Params); err != nil {
-		panic(err)
+		log.Fatalf("[FATAL] could not decode config file %v: %v", p, err)
 	}
 }
