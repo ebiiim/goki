@@ -8,10 +8,10 @@ import (
 
 	"github.com/gorilla/sessions"
 
-	"github.com/ebiiim/goki/api"
 	"github.com/ebiiim/goki/app"
 	"github.com/ebiiim/goki/config"
 	"github.com/ebiiim/goki/db"
+	"github.com/ebiiim/goki/server"
 )
 
 const (
@@ -31,7 +31,7 @@ func main() {
 	}
 	ap := app.NewApp(udb, adb)
 	ss := sessions.NewFilesystemStore(sessionDirPath, []byte(config.Params.Session.Key))
-	s := api.NewServer(config.Params.Server.Scheme, config.Params.Server.Address, ap, ss)
+	s := server.NewServer(config.Params.Server.Scheme, config.Params.Server.Address, ap, ss)
 	go func() {
 		if err := s.ListenAndServe(); err != nil { // err will be returned when call s.Shutdown
 			log.Printf("server closed: %v", err)
