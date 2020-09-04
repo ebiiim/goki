@@ -35,6 +35,8 @@ type JSONUserDB struct {
 	mu       sync.Mutex
 }
 
+var _ UserDB = (*JSONUserDB)(nil)
+
 // NewJSONUserDB initializes a JSONUserDB
 func NewJSONUserDB(filePath string) (*JSONUserDB, error) {
 	d := &JSONUserDB{
@@ -132,6 +134,8 @@ type JSONActivityDB struct {
 	db map[string]map[int64]*model.Activity
 	mu sync.Mutex
 }
+
+var _ ActivityDB = (*JSONActivityDB)(nil)
 
 // NewJSONActivityDB initializes a JSONActivityDB
 func NewJSONActivityDB(filePath string) (*JSONActivityDB, error) {
