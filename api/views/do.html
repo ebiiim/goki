@@ -14,49 +14,56 @@
         </div>
     </header>
 
-    <div class="container">
-        <div class="row mt-4">
-            <div class="col-4 text-center">
-                <div class="form-group">
-                    <label for="didSmall">小型</label>
-                    <select class="form-control" id="didSmall">
-                        {{ range $i, $v := .FormMax }}
-                        <option>{{ $i }}</option>
-                        {{ end }}
-                    </select>
-                </div>
-            </div>
-            <div class="col-4 text-center">
-                <div class="form-group">
-                    <label for="didMedium">中型</label>
-                    <select class="form-control" id="didMedium">
-                        {{ range $i, $v := .FormMax }}
-                        <option>{{ $i }}</option>
-                        {{ end }}
-                    </select>
-                </div>
-            </div>
-            <div class="col-4 text-center">
-                <div class="form-group">
-                    <label for="didLarge">大型</label>
-                    <select class="form-control" id="didLarge">
-                        {{ range $i, $v := .FormMax }}
-                        <option>{{ $i }}</option>
-                        {{ end }}
-                    </select>
-                </div>
-            </div>
-        </div>
-    </div>
+    <form id="{{ $.FormID }}" action="{{ $.FormPOSTURL }}" method="post">
 
-    <div class="container">
-        <div class="row mt-4">
-            <div class="col-12 text-center">
-                <button class="btn btn-sm btn-primary">やっつけた！</button>
-                <a href="/me"><button class="btn btn-sm btn-secondary">もどる</button></a>
+        <div class="container">
+            <div class="row mt-4">
+                <div class="col-4 text-center">
+                    <div class="form-group">
+                        <label for="{{ $.FormSmall }}">小型</label>
+                        <select class="form-control" form="{{ $.FormID }}" id="{{ $.FormSmall }}"
+                            name="{{ $.FormSmall }}">
+                            {{ range $i, $v := .FormMax }}
+                            <option>{{ $i }}</option>
+                            {{ end }}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-4 text-center">
+                    <div class="form-group">
+                        <label for="{{ $.FormMedium }}">中型</label>
+                        <select class="form-control" form="{{ $.FormID }}" id="{{ $.FormMedium }}"
+                            name="{{ $.FormMedium }}">
+                            {{ range $i, $v := .FormMax }}
+                            <option>{{ $i }}</option>
+                            {{ end }}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-4 text-center">
+                    <div class="form-group">
+                        <label for="{{ $.FormLarge }}">大型</label>
+                        <select class="form-control" form="{{ $.FormID }}" id="{{ $.FormLarge }}"
+                            name="{{ $.FormLarge }}">
+                            {{ range $i, $v := .FormMax }}
+                            <option>{{ $i }}</option>
+                            {{ end }}
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+
+        <div class="container">
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <button type="submit" form="{{ $.FormID }}" class="btn btn-sm btn-primary">やっつけた！</button>
+                    <a href="/me"><button class="btn btn-sm btn-secondary">もどる</button></a>
+                </div>
+            </div>
+        </div>
+
+    </form>
 
     {{template "footer"}}
 

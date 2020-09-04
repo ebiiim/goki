@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+{{template "head"}}
+
+<body>
+    {{template "header"}}
+
+    <header class="container">
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <p class="lead">{{ .UserName }} さんの新しい戦果が登録されました！</p>
+            </div>
+        </div>
+    </header>
+
+
+    <div class="container">
+        <div class="row mt-4">
+            PrevG: {{ .PrevG }}<br>
+            AddedG: {{ .AddedG }}<br>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row mt-4">
+            <div class="col-12 text-center">
+                <a href="/me"><button class="btn btn-sm btn-secondary">もどる</button></a>
+            </div>
+        </div>
+    </div>
+
+    {{template "footer"}}
+
+</body>
+
+</html>

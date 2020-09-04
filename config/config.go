@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	SessionName           = "goki"
-	SessionSecret         = "secret"
-	SessionAuthenticated  = "authenticated"
-	SessionTwitterID      = "twitter_id"
+	SessionName = "goki"
+	// SessionSecret         = "secret"
+	// SessionAuthenticated  = "authenticated"
+	// SessionTwitterID      = "twitter_id"
 	SessionUserID         = "user_id"
 	ServerWriteTimeout    = 15 * time.Second
 	ServerReadTimeout     = 15 * time.Second

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/dghubble/gologin/v2/twitter"
@@ -50,6 +51,7 @@ const (
 	tmplTop tmplKey = iota
 	tmplMe
 	tmplDo
+	tmplDone
 )
 
 // template helper
@@ -65,6 +67,7 @@ var (
 	pathTop             = path.Join(pathBase, "")
 	pathMe              = path.Join(pathBase, "me")
 	pathDo              = path.Join(pathBase, "do")
+	pathDone            = path.Join(pathBase, "done")
 	pathLogout          = path.Join(pathBase, "logout")
 	pathTwitterLogin    = path.Join(pathBase, "login/twitter")
 	pathTwitterCallback = config.Params.Twitter.CallbackPath
@@ -111,6 +114,9 @@ func NewServer(scheme, addr string, ap *app.App, ss sessions.Store) *Server {
 
 	r.HandleFunc(pathDo, s.checkLogin(s.notLoggedInGoTop(s.serveDo)))
 	s.mustTmpl(tmplDo, filepath.Join(dirTmpl, "do.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_header.html"), filepath.Join(dirTmpl, "_footer.html"))
+
+	r.HandleFunc(pathDone, s.checkLogin(s.notLoggedInGoTop(s.serveDone))).Methods(http.MethodPost)
+	s.mustTmpl(tmplDone, filepath.Join(dirTmpl, "done.html"), filepath.Join(dirTmpl, "_head.html"), filepath.Join(dirTmpl, "_header.html"), filepath.Join(dirTmpl, "_footer.html"))
 
 	r.HandleFunc(pathLogout, s.serveLogout)
 
@@ -298,7 +304,7 @@ func (s *Server) serveTop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.T[tmplTop].Execute(w, tmplStruct); err != nil {
-		Log.D("serveTop: template.Execute error")
+		Log.I("serveTop: template.Execute error")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -317,7 +323,7 @@ func (s *Server) serveMe(w http.ResponseWriter, r *http.Request) {
 	year := time.Now().Year()
 	g, err := s.A.CountByYear(u.ID, year, time.Local)
 	if err != nil {
-		Log.D("serveMe: could not CountByYear")
+		Log.I("serveMe: could not CountByYear")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -326,27 +332,90 @@ func (s *Server) serveMe(w http.ResponseWriter, r *http.Request) {
 	tmplStruct.Year = year
 
 	if err := s.T[tmplMe].Execute(w, tmplStruct); err != nil {
-		Log.D("serveMe: template.Execute error")
+		Log.I("serveMe: template.Execute error")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
+// names used in do.html and done.html
+var (
+	formDo      = "formDo"
+	formSmall   = "doSmall"
+	formMedium  = "doMedium"
+	formLarge   = "doLarge"
+	formMax     = 21
+	formPOSTURL = pathDone
+)
+
 func (s *Server) serveDo(w http.ResponseWriter, r *http.Request) {
 	Log.D("serveDo")
 
 	tmplStruct := struct {
-		UserName string
-		FormMax  []struct{}
+		UserName                         string
+		FormMax                          []struct{}
+		FormPOSTURL                      string
+		FormID                           string
+		FormSmall, FormMedium, FormLarge string
 	}{
-		FormMax: make([]struct{}, 21), // HACK: range(0, 21)
+		FormMax:     make([]struct{}, formMax), // HACK: range(0, formMax)
+		FormPOSTURL: formPOSTURL,
+		FormID:      formDo,
+		FormSmall:   formSmall,
+		FormMedium:  formMedium,
+		FormLarge:   formLarge,
 	}
 
 	u, _ := r.Context().Value(ctxLoginUser).(*model.User)
 	tmplStruct.UserName = u.Name
 
 	if err := s.T[tmplDo].Execute(w, tmplStruct); err != nil {
-		Log.D("serveMe: template.Execute error")
+		Log.I("serveDo: template.Execute error")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Server) serveDone(w http.ResponseWriter, r *http.Request) {
+	Log.D("serveDone")
+
+	tmplStruct := struct {
+		UserName string
+		PrevG    *model.Goki
+		AddedG   *model.Goki
+	}{}
+
+	u, _ := r.Context().Value(ctxLoginUser).(*model.User)
+	tmplStruct.UserName = u.Name
+
+	formS, errS := strconv.Atoi(r.FormValue(formSmall))
+	formM, errM := strconv.Atoi(r.FormValue(formMedium))
+	formL, errL := strconv.Atoi(r.FormValue(formLarge))
+
+	if errS != nil || errM != nil || errL != nil || (formS < 0 || formS > formMax) || (formM < 0 || formM > formMax) || (formL < 0 || formL > formMax) {
+		Log.I("serveDone: invalid form value: formS=%v formM=%v formL=%v errS=%v errM=%v errL=%v", formS, formM, formL, errS, errM, errL)
+		http.Error(w, "invalid form value", http.StatusInternalServerError)
+		return
+	}
+
+	year := time.Now().Year()
+	g, err := s.A.CountByYear(u.ID, year, time.Local)
+	if err != nil {
+		Log.I("serveDone: could not CountByYear")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmplStruct.PrevG = g
+	act, err := s.A.Action(u, formS, formM, formL)
+	if err != nil {
+		Log.I("serveDone: could not Action")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmplStruct.AddedG = act.G
+
+	if err := s.T[tmplDone].Execute(w, tmplStruct); err != nil {
+		Log.I("serveDone: template.Execute error")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
