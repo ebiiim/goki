@@ -320,7 +320,7 @@ func (s *Server) serveMe(w http.ResponseWriter, r *http.Request) {
 	}{}
 
 	u, _ := r.Context().Value(ctxLoginUser).(*model.User)
-	year := time.Now().Year()
+	year := goki.TimeNow().Year()
 	g, err := s.A.CountByYear(u.ID, year, time.Local)
 	if err != nil {
 		Log.I("serveMe: could not CountByYear")
@@ -406,7 +406,7 @@ func (s *Server) serveDone(w http.ResponseWriter, r *http.Request) {
 	}
 	tmplStruct.AddedG = act.G
 
-	year := time.Now().Year()
+	year := goki.TimeNow().Year()
 	g, err := s.A.CountByYear(u.ID, year, time.Local)
 	if err != nil {
 		Log.I("serveDone: could not CountByYear")
