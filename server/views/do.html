@@ -4,6 +4,7 @@
 {{template "head"}}
 
 <body>
+
     {{template "header"}}
 
     <header class="container">
@@ -57,7 +58,8 @@
         <div class="container">
             <div class="row mt-4">
                 <div class="col-12 text-center">
-                    <button type="submit" form="{{ $.FormID }}" class="btn btn-sm btn-primary">やっつけた！</button>
+                    <button id="btnSubmit" type="submit" form="{{ $.FormID }}"
+                        class="btn btn-sm btn-primary">やっつけた！</button>
                     <a href="/me"><button class="btn btn-sm btn-secondary">もどる</button></a>
                 </div>
             </div>
@@ -67,6 +69,26 @@
 
     {{template "footer"}}
 
+    <script>
+        const btnSubmit = document.querySelector("#btnSubmit");
+        const inputS = document.querySelector("#{{ $.FormSmall }}");
+        const inputM = document.querySelector("#{{ $.FormMedium }}");
+        const inputL = document.querySelector("#{{ $.FormLarge }}");
+
+        const validateValues = () => {
+            if (inputS.value + inputM.value + inputL.value > 0) {
+                btnSubmit.disabled = false;
+                return;
+            }
+            btnSubmit.disabled = true;
+        };
+
+        inputS.addEventListener("change", validateValues);
+        inputM.addEventListener("change", validateValues);
+        inputL.addEventListener("change", validateValues);
+
+        validateValues();
+    </script>
 </body>
 
 </html>

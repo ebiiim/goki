@@ -4,17 +4,20 @@
 {{template "head"}}
 
 <body>
+
     {{template "header"}}
 
     <div class="container">
         <div class="row">
             <div class="col-12 text-center">
-                <p class="lead">今まで駆除したＧの数を覚えていますか？</p>
+                <p class="lead">今まで駆除したゴキブリの数を覚えていますか？</p>
                 {{ if eq .IsLoggedIn false }}
-                    <a href="/login/twitter"><img src="static/sign_in_with_twitter.png"></a>
+                <a href="/login/twitter"><img src="static/sign_in_with_twitter.png"></a>
                 {{else}}
-                    <a href="/me"><button class="btn btn-sm btn-primary">{{ .UserName }} さんのマイページ</button></a>
-                    <a href="/logout"><button class="btn btn-sm btn-secondary">ログアウト</button></a>
+                <a href="/me"><button class="btn btn-sm btn-primary">
+                        {{ .UserName }} さんのマイページ
+                    </button></a>
+                <a href="/logout"><button class="btn btn-sm btn-secondary">ログアウト</button></a>
                 {{end}}
             </div>
         </div>

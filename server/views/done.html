@@ -4,6 +4,7 @@
 {{template "head"}}
 
 <body>
+
     {{template "header"}}
 
     <header class="container">
@@ -14,24 +15,76 @@
         </div>
     </header>
 
-
     <div class="container">
-        <div class="row mt-4">
-            PrevG: {{ .PrevG }}<br>
-            AddedG: {{ .AddedG }}<br>
+        <div class="row">
+            <div class="col-12">
+                <table class="table text-center">
+                    <thead>
+                        <tr>
+                            <th scope="col">小型</th>
+                            <th scope="col">中型</th>
+                            <th scope="col">大型</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ .NowG.S }}
+                                {{ if gt .AddedG.S 0 }}
+                                (+{{ .AddedG.S }})
+                                {{ end }}
+                            </td>
+                            <td>{{ .NowG.M }}
+                                {{ if gt .AddedG.M 0 }}
+                                (+{{ .AddedG.M }})
+                                {{ end }}
+                            </td>
+                            <td>{{ .NowG.L }}
+                                {{ if gt .AddedG.L 0 }}
+                                (+{{ .AddedG.L }})
+                                {{ end }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <div class="container">
         <div class="row mt-4">
             <div class="col-12 text-center">
-                <a href="/me"><button class="btn btn-sm btn-secondary">もどる</button></a>
+                <a id="btnTweet" href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
+                <br>
+                <a href="/me"><button class="btn btn-sm btn-secondary">マイページ</button></a>
             </div>
         </div>
     </div>
 
     {{template "footer"}}
 
+    <script>
+        let s = "【今年のG】";
+        s += "大{{ .NowG.L }}";
+        // {{ if gt .AddedG.L 0 }}
+        s += "(+{{ .AddedG.L }})";
+        // {{ end }}
+        s += " 中{{ .NowG.M }}";
+        // {{ if gt .AddedG.M 0 }}
+        s += "(+{{ .AddedG.M }})";
+        // {{ end }}
+        s += " 小{{ .NowG.S }}";
+        // {{ if gt .AddedG.S 0 }}
+        s += "(+{{ .AddedG.S }})";
+        // {{ end }}
+        const btnTweet = document.querySelector("#btnTweet");
+        btnTweet.dataset.url = document.location.origin;
+        btnTweet.dataset.text = s;
+        btnTweet.dataset.lang = document.documentElement.lang;
+        btnTweet.dataset.size = "large";
+        btnTweet.dataset.count = "none";
+        btnTweet.dataset.hashtags = "ゴキブリやっつけた";
+    </script>
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </body>
 
 </html>

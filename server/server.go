@@ -381,8 +381,8 @@ func (s *Server) serveDone(w http.ResponseWriter, r *http.Request) {
 
 	tmplStruct := struct {
 		UserName string
-		PrevG    *model.Goki
 		AddedG   *model.Goki
+		NowG     *model.Goki
 	}{}
 
 	u, _ := r.Context().Value(ctxLoginUser).(*model.User)
@@ -398,14 +398,6 @@ func (s *Server) serveDone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	year := time.Now().Year()
-	g, err := s.A.CountByYear(u.ID, year, time.Local)
-	if err != nil {
-		Log.I("serveDone: could not CountByYear")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	tmplStruct.PrevG = g
 	act, err := s.A.Action(u, formS, formM, formL)
 	if err != nil {
 		Log.I("serveDone: could not Action")
@@ -413,6 +405,15 @@ func (s *Server) serveDone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tmplStruct.AddedG = act.G
+
+	year := time.Now().Year()
+	g, err := s.A.CountByYear(u.ID, year, time.Local)
+	if err != nil {
+		Log.I("serveDone: could not CountByYear")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmplStruct.NowG = g
 
 	if err := s.T[tmplDone].Execute(w, tmplStruct); err != nil {
 		Log.I("serveDone: template.Execute error")
