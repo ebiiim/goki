@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/gorilla/sessions"
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/ebiiim/goki/app"
 	"github.com/ebiiim/goki/config"
@@ -31,7 +33,7 @@ func main() {
 	}
 	ap := app.NewApp(udb, adb)
 	ss := sessions.NewFilesystemStore(sessionDirPath, []byte(config.Params.Session.Key))
-	s := server.NewServer(config.Params.Server.Scheme, config.Params.Server.Address, ap, ss)
+	s := server.NewServer(config.Params.Server.Address, ap, ss)
 	go func() {
 		switch scheme := config.Params.Server.Scheme; scheme {
 		case "http":
@@ -39,7 +41,7 @@ func main() {
 				log.Printf("server closed: %v", err)
 			}
 		case "https":
-			if err := s.ListenAndServeTLS("", ""); err != nil { // err will be returned when call s.Shutdown
+			if err := http.Serve(autocert.NewListener(config.Params.Server.Address), s.Handler); err != nil { // err will be returned when call s.Shutdown
 				log.Printf("server closed: %v", err)
 			}
 		default:

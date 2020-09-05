@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"html/template"
@@ -18,7 +17,6 @@ import (
 	"github.com/ebiiim/logo"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/ebiiim/goki"
 	"github.com/ebiiim/goki/app"
@@ -87,7 +85,7 @@ type Server struct {
 }
 
 // NewServer initializes a Server.
-func NewServer(scheme, addr string, ap *app.App, ss sessions.Store) *Server {
+func NewServer(addr string, ap *app.App, ss sessions.Store) *Server {
 	r := mux.NewRouter()
 
 	s := &Server{}
@@ -99,16 +97,6 @@ func NewServer(scheme, addr string, ap *app.App, ss sessions.Store) *Server {
 	s.ReadTimeout = config.ServerReadTimeout
 	s.IdleTimeout = config.ServerIdleTimeout
 	s.Addr = addr
-	if scheme == "https" {
-		certManager := autocert.Manager{
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(addr),
-		}
-		s.Addr = ":https"
-		s.TLSConfig = &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		}
-	}
 
 	// Route and Template
 	if config.Params.Web.ServeStatic {
