@@ -33,8 +33,17 @@ func main() {
 	ss := sessions.NewFilesystemStore(sessionDirPath, []byte(config.Params.Session.Key))
 	s := server.NewServer(config.Params.Server.Scheme, config.Params.Server.Address, ap, ss)
 	go func() {
-		if err := s.ListenAndServe(); err != nil { // err will be returned when call s.Shutdown
-			log.Printf("server closed: %v", err)
+		switch scheme := config.Params.Server.Scheme; scheme {
+		case "http":
+			if err := s.ListenAndServe(); err != nil { // err will be returned when call s.Shutdown
+				log.Printf("server closed: %v", err)
+			}
+		case "https":
+			if err := s.ListenAndServeTLS("", ""); err != nil { // err will be returned when call s.Shutdown
+				log.Printf("server closed: %v", err)
+			}
+		default:
+			log.Printf("invalid scheme: %v", scheme)
 		}
 	}()
 	log.Printf("%s://%s\n", config.Params.Server.Scheme, config.Params.Server.Address)

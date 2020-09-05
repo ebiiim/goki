@@ -76,13 +76,14 @@
         // {{ if gt .AddedG.S 0 }}
         s += "(+{{ .AddedG.S }})";
         // {{ end }}
+        s += "\n";
         const btnTweet = document.querySelector("#btnTweet");
-        btnTweet.dataset.url = document.location.origin;
-        btnTweet.dataset.text = s;
         btnTweet.dataset.lang = document.documentElement.lang;
+        btnTweet.dataset.text = s;
+        btnTweet.dataset.hashtags = "ゴキブリやっつけた";
+        btnTweet.dataset.url = document.location.origin;
         btnTweet.dataset.size = "large";
         btnTweet.dataset.count = "none";
-        btnTweet.dataset.hashtags = "ゴキブリやっつけた";
     </script>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </body>

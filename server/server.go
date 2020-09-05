@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"html/template"
@@ -17,6 +18,7 @@ import (
 	"github.com/ebiiim/logo"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/ebiiim/goki"
 	"github.com/ebiiim/goki/app"
@@ -98,7 +100,14 @@ func NewServer(scheme, addr string, ap *app.App, ss sessions.Store) *Server {
 	s.IdleTimeout = config.ServerIdleTimeout
 	s.Addr = addr
 	if scheme == "https" {
-		panic("not implemented") // TODO
+		certManager := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(addr),
+		}
+		s.Addr = ":https"
+		s.TLSConfig = &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		}
 	}
 
 	// Route and Template
