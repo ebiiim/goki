@@ -2,6 +2,8 @@ package db
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -75,21 +77,25 @@ func (d *JSONUserDB) Close() error {
 // Get gets an user or error.
 func (d *JSONUserDB) Get(userID string) (*model.User, error) {
 	d.mu.Lock()
-	defer d.mu.Unlock()
 	u, ok := d.db[userID]
+	d.mu.Unlock()
 	if !ok {
 		return nil, goki.ErrUserNotFound
 	}
-	return u, nil
+	var uu model.User
+	deepCopy(&uu, u)
+	return &uu, nil
 }
 
 // GetByTwitterID gets an user by Twitter ID or error.
 func (d *JSONUserDB) GetByTwitterID(twitterID string) (*model.User, error) {
+	var uu model.User
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	for _, u := range d.db {
 		if u.Twitter.ID == twitterID {
-			return u, nil
+			deepCopy(&uu, u)
+			return &uu, nil
 		}
 	}
 	return nil, goki.ErrUserNotFound
@@ -219,13 +225,17 @@ func (d *JSONActivityDB) Add(act *model.Activity) error {
 // Always returns nil
 func (d *JSONActivityDB) Query(userID string, queryFn func(a *model.Activity) bool) ([]*model.Activity, error) {
 	var ret []*model.Activity
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	al, ok := d.db[userID]
 	if !ok {
 		return ret, nil
 	}
 	for _, v := range al {
 		if queryFn(v) {
-			ret = append(ret, v)
+			var act model.Activity
+			deepCopy(&act, v)
+			ret = append(ret, &act)
 		}
 	}
 	return ret, nil
@@ -240,4 +250,18 @@ func isFile(filePath string) bool {
 		return false
 	}
 	return true
+}
+
+func deepCopy(dst interface{}, src interface{}) error {
+	if dst == nil || src == nil {
+		return goki.ErrWrap(goki.ErrDBInternal, errors.New("deepCopy: dst or src is nil"))
+	}
+	b, err := json.Marshal(src)
+	if err != nil {
+		return goki.ErrWrap(goki.ErrDBInternal, fmt.Errorf("could not encode to JSON: %w", err))
+	}
+	if err := json.Unmarshal(b, dst); err != nil {
+		return goki.ErrWrap(goki.ErrDBInternal, fmt.Errorf("could not decode from JSON: %w", err))
+	}
+	return nil
 }

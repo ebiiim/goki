@@ -12,6 +12,8 @@ var (
 	ErrDBClose = errors.New("could not close DB")
 	// ErrDBSave represents could not save DB error.
 	ErrDBSave = errors.New("could not save DB")
+	// ErrDBInternal represents DB internal error.
+	ErrDBInternal = errors.New("DB internal error")
 	// ErrAppClose represents could not close App error.
 	ErrAppClose = errors.New("could not close App")
 	// ErrUserNotFound represents user not found error.

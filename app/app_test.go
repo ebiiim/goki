@@ -1,6 +1,9 @@
 package app_test
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -10,34 +13,68 @@ import (
 
 const testdataDir = "./testdata"
 
-func setupAppWithJSONDB(t *testing.T) *app.App {
+func copyFile(t *testing.T, src, dst string) {
 	t.Helper()
-	udb, err := db.NewJSONUserDB(filepath.Join(testdataDir, "JSONUserDB.json"))
+	b, err := ioutil.ReadFile(src)
 	if err != nil {
 		t.Error(err)
 	}
-	adb, err := db.NewJSONActivityDB(filepath.Join(testdataDir, "JSONActivityDB.json"))
+	if err := ioutil.WriteFile(dst, b, 0755); err != nil {
+		t.Error(err)
+	}
+}
+
+func removeFile(t *testing.T, target string) {
+	t.Helper()
+	if err := os.Remove(target); err != nil {
+		t.Error(err)
+	}
+}
+
+func setupAppWithJSONDB(t *testing.T) (_ *app.App, cleanupFn func()) {
+	t.Helper()
+
+	udbGoldenFile := filepath.Join(testdataDir, "JSONUserDB.json")
+	udbFile := filepath.Join(testdataDir, fmt.Sprintf("JSONUserDB_%s.json", t.Name()))
+	copyFile(t, udbGoldenFile, udbFile)
+	udb, err := db.NewJSONUserDB(udbFile)
 	if err != nil {
 		t.Error(err)
 	}
-	return app.NewApp(udb, adb)
+
+	adbGoldenFile := filepath.Join(testdataDir, "JSONActivityDB.json")
+	adbFile := filepath.Join(testdataDir, fmt.Sprintf("JSONActivityDB_%s.json", t.Name()))
+	copyFile(t, adbGoldenFile, adbFile)
+	adb, err := db.NewJSONActivityDB(adbFile)
+	if err != nil {
+		t.Error(err)
+	}
+
+	cleanupFn = func() {
+		removeFile(t, udbFile)
+		removeFile(t, adbFile)
+	}
+
+	return app.NewApp(udb, adb), cleanupFn
 }
 
 func TestApp_Close(t *testing.T) {
-	a := setupAppWithJSONDB(t)
+	a, cleanupFn := setupAppWithJSONDB(t)
+	defer cleanupFn()
 	if err := a.Close(); err != nil {
 		t.Error(err)
 	}
 }
 
 func TestApp_GetUser(t *testing.T) {
-	a := setupAppWithJSONDB(t)
+	a, cleanupFn := setupAppWithJSONDB(t)
+	defer cleanupFn()
 	defer func() {
 		if err := a.Close(); err != nil {
 			t.Error(err)
 		}
 	}()
-	// Just use the database so complicated tests are not needed.
+	// Just try to use the database so complicated tests are not needed.
 	u, err := a.GetUser("123")
 	if err != nil {
 		t.Error(err)
@@ -48,8 +85,14 @@ func TestApp_GetUser(t *testing.T) {
 }
 
 func TestApp_AddUser(t *testing.T) {
-	a := setupAppWithJSONDB(t) // Do not run a.Close to avoid save DB.
-	// Just use the database so complicated tests are not needed.
+	a, cleanupFn := setupAppWithJSONDB(t)
+	defer cleanupFn()
+	defer func() {
+		if err := a.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+	// Just try to use the database so complicated tests are not needed.
 	u, err := a.AddUser("000", "taro", "00000000")
 	if err != nil {
 		t.Error(err)
@@ -60,8 +103,14 @@ func TestApp_AddUser(t *testing.T) {
 }
 
 func TestApp_Action(t *testing.T) {
-	a := setupAppWithJSONDB(t) // Do not run a.Close to avoid save DB.
-	// Just use the database so complicated tests are not needed.
+	a, cleanupFn := setupAppWithJSONDB(t)
+	defer cleanupFn()
+	defer func() {
+		if err := a.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+	// Just try to use the database so complicated tests are not needed.
 	u, _ := a.GetUser("123") // alice
 	act, err := a.Action(u, 1, 10, 100)
 	if err != nil {
