@@ -31,7 +31,7 @@ var Log = logo.New(logo.DEBUG, nil)
 type ctxKey int
 
 const (
-	ctxLoginUser ctxKey = iota
+	ctxLoginUser ctxKey = iota + 1
 )
 
 // check session values
@@ -48,7 +48,7 @@ func valuesExist(sess *sessions.Session, key ...string) bool {
 type tmplKey int
 
 const (
-	tmplTop tmplKey = iota
+	tmplTop tmplKey = iota + 1
 	tmplMe
 	tmplDo
 	tmplDone
