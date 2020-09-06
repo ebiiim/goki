@@ -10,6 +10,8 @@ var (
 	ErrDBOpen = errors.New("could not open DB")
 	// ErrDBClose represents could not close DB error.
 	ErrDBClose = errors.New("could not close DB")
+	// ErrDBSave represents could not save DB error.
+	ErrDBSave = errors.New("could not save DB")
 	// ErrAppClose represents could not close App error.
 	ErrAppClose = errors.New("could not close App")
 	// ErrUserNotFound represents user not found error.

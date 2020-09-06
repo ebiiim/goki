@@ -105,8 +105,11 @@ func (d *JSONUserDB) Add(user *model.User) error {
 	}
 	u := model.NewUser(user.ID, user.Name, user.Twitter.ID)
 	d.mu.Lock()
-	defer d.mu.Unlock()
 	d.db[user.ID] = u
+	d.mu.Unlock()
+	if err := d.save(); err != nil {
+		return goki.ErrWrap(goki.ErrDBSave, err)
+	}
 	return nil
 }
 
@@ -193,7 +196,6 @@ func (d *JSONActivityDB) Add(act *model.Activity) error {
 	}
 	ut := act.TimeUTC.Unix()
 	d.mu.Lock()
-	defer d.mu.Unlock()
 	for {
 		_, ok := d.db[act.UserID][ut]
 		if ok {
@@ -203,6 +205,10 @@ func (d *JSONActivityDB) Add(act *model.Activity) error {
 		a := model.NewActivity(act.UserID, time.Unix(ut, 0).In(time.UTC), act.G.S, act.G.M, act.G.L)
 		d.db[act.UserID][ut] = a
 		break
+	}
+	d.mu.Unlock()
+	if err := d.save(); err != nil {
+		return goki.ErrWrap(goki.ErrDBSave, err)
 	}
 	return nil
 }
