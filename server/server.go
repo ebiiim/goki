@@ -71,7 +71,7 @@ var (
 	pathLogout          = path.Join(pathBase, "logout")
 	pathTwitterLogin    = path.Join(pathBase, "login/twitter")
 	pathTwitterCallback = config.Params.Twitter.CallbackPath
-	urlTwitterCallback  = fmt.Sprintf("%s://%s%s", config.Params.Server.Scheme, config.Params.Server.Address, config.Params.Twitter.CallbackPath)
+	UrlTwitterCallback  = fmt.Sprintf("%s://%s%s", config.Params.Server.Scheme, config.Params.Server.Address, config.Params.Twitter.CallbackPath)
 	dirTmpl             = config.Params.Web.TemplateDir
 	dirStatic           = config.Params.Web.StaticDir
 )
@@ -98,6 +98,8 @@ func NewServer(addr string, ap *app.App, ss sessions.Store) *Server {
 	s.IdleTimeout = config.ServerIdleTimeout
 	s.Addr = addr
 
+	r.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }).Methods(http.MethodGet)
+
 	// Route and Template
 	if config.Params.Web.ServeStatic {
 		r.PathPrefix(pathStatic).Handler(http.StripPrefix(pathStatic, http.FileServer(http.Dir(dirStatic))))
@@ -121,7 +123,7 @@ func NewServer(addr string, ap *app.App, ss sessions.Store) *Server {
 	oauth1Config := &oauth1.Config{
 		ConsumerKey:    config.Params.Twitter.Key,
 		ConsumerSecret: config.Params.Twitter.Secret,
-		CallbackURL:    urlTwitterCallback,
+		CallbackURL:    UrlTwitterCallback,
 		Endpoint:       twitterOAuth1.AuthorizeEndpoint,
 	}
 	r.Handle(pathTwitterLogin, twitter.LoginHandler(oauth1Config, nil))
