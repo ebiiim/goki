@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 - 2020-12-20
+
+### Changed
+
+- Containerized and deployed to Cloud Run.
+- Update dependencies.
+
 ## 0.1.1 - 2020-09-06
 
 ### Fixed

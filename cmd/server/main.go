@@ -25,11 +25,11 @@ const (
 func main() {
 	udb, err := db.NewJSONUserDB(userDBPath)
 	if err != nil {
-		log.Fatalf("could not user database file %s: %v", userDBPath, err)
+		log.Fatalf("could not load user database file %s: %v", userDBPath, err)
 	}
 	adb, err := db.NewJSONActivityDB(activityDBPath)
 	if err != nil {
-		log.Fatalf("could not activity database file %s: %v", activityDBPath, err)
+		log.Fatalf("could not load activity database file %s: %v", activityDBPath, err)
 	}
 	ap := app.NewApp(udb, adb)
 	ss := sessions.NewFilesystemStore(sessionDirPath, []byte(config.Params.Session.Key))

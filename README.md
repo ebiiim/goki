@@ -12,6 +12,12 @@ A website that counts the number of cockroaches you've rid this year.
 
 ## Deploy
 
+### Deploy to Cloud Run
+
+Prepare `.env` and run `deploy.sh`.
+
+### Deploy standalone
+
 Prepare `config.json`.
 
 ```json
@@ -51,6 +57,7 @@ Run the server application.
 - `GOKI_CONFIG`: Path to config file. (default `./config.json`)
 - `TWITTER_CONSUMER_KEY`: Twitter consumer key. (override the value loaded from `./config.json`)
 - `TWITTER_CONSUMER_SECRET`: Twitter consumer secret. (override the value loaded from `./config.json`)
+- the rest: see `.env.sample`. (added many environment variables for containerization)
 
 ## Third Party Notice
 
