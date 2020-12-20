@@ -1,6 +1,8 @@
 module github.com/ebiiim/goki
 
-go 1.14
+go 1.15
+
+replace github.com/GoogleCloudPlatform/firestore-gorilla-sessions v0.1.0 => github.com/ebiiim/firestore-gorilla-sessions v0.1.1
 
 require (
 	cloud.google.com/go/firestore v1.4.0

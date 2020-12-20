@@ -245,6 +245,10 @@ func (s *Server) twitterLogin() http.Handler {
 			return // (X)
 		}
 		sess.Values[config.SessionUserID] = user.ID
+		sess.Options.MaxAge = 86400 * 30
+		sess.Options.Path = "/"
+		sess.Options.HttpOnly = true
+		sess.Options.SameSite = http.SameSiteLaxMode
 		Log.D("twitterLogin: save session")
 		if err := sess.Save(r, w); err != nil {
 			Log.E("twitterLogin: failed to save session")

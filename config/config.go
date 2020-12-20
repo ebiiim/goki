@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	SessionName           = "goki"
+	SessionName           = "goki.nullpo-t.net#goki"
 	SessionUserID         = "user_id"
 	ServerWriteTimeout    = 15 * time.Second
 	ServerReadTimeout     = 15 * time.Second
